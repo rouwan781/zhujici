@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>助记词扫描器 v1.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #30363d;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #58a6ff;
+            margin-bottom: 5px;
+            font-weight: 300;
+        }
+        
+        .header .version {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        
+        /* 警告横幅 */
+        .warning-banner {
+            background-color: #da3633;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            text-align: center;
+            border-left: 5px solid #f85149;
+        }
+        
+        /* 控制面板 */
+        .control-panel {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-start {
+            background-color: #238636;
+            color: white;
+        }
+        
+        .btn-start:hover {
+            background-color: #2ea043;
+        }
+        
+        .btn-pause {
+            background-color: #da3633;
+            color: white;
+        }
+        
+        .btn-pause:hover {
+            background-color: #f85149;
+        }
+        
+        .btn-test {
+            background-color: #8957e5;
+            color: white;
+        }
+        
+        .btn-test:hover {
+            background-color: #9e6cfc;
+        }
+        
+        .btn-stats {
+            background-color: #1f6feb;
+            color: white;
+        }
+        
+        .btn-stats:hover {
+            background-color: #2a7bf0;
+        }
+        
+        .btn-export {
+            background-color: #0e8a16;
+            color: white;
+        }
+        
+        .btn-export:hover {
+            background-color: #1a9c24;
+        }
+        
+        .speed-control {
+            margin-top: 15px;
+        }
+        
+        .speed-control label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8b949e;
+        }
+        
+        .speed-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #30363d;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #58a6ff;
+            cursor: pointer;
+        }
+        
+        .speed-value {
+            color: #58a6ff;
+            font-weight: bold;
+        }
+        
+        /* 统计信息 */
+        .stats-panel {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stats-panel h3 {
+            color: #58a6ff;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+        }
+        
+        /* 当前扫描 */
+        .current-scan {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .current-scan h3 {
+            color: #58a6ff;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .scan-info {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-label {
+            width: 120px;
+            font-weight: bold;
+            color: #8b949e;
+        }
+        
+        .info-value {
+            flex: 1;
+            word-break: break-all;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .mnemonic-value {
+            color: #f0883e;
+            font-weight: bold;
+        }
+        
+        .address-value {
+            color: #58a6ff;
+        }
+        
+        .private-key-value {
+            color: #d2a8ff;
+        }
+        
+        .balance-value {
+            color: #3fb950;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .zero-balance {
+            color: #8b949e;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #21262d;
+            color: #c9d1d9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        
+        .action-btn:hover {
+            background-color: #30363d;
+        }
+        
+        /* 巡查面板 */
+        .patrol-panel {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .patrol-panel h3 {
+            color: #58a6ff;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .patrol-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .patrol-controls input,
+        .patrol-controls select {
+            padding: 8px 12px;
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+        }
+        
+        .patrol-controls button {
+            padding: 8px 16px;
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .patrol-controls button:hover {
+            background-color: #2a7bf0;
+        }
+        
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+        
+        .patrol-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .patrol-table th {
+            background-color: #21262d;
+            position: sticky;
+            top: 0;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #8b949e;
+            border-bottom: 2px solid #30363d;
+        }
+        
+        .patrol-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #30363d;
+            font-size: 13px;
+        }
+        
+        .patrol-table tr:hover {
+            background-color: #21262d;
+        }
+        
+        .patrol-table tr.has-balance {
+            background-color: rgba(63, 185, 80, 0.1);
+        }
+        
+        .patrol-table tr.has-balance:hover {
+            background-color: rgba(63, 185, 80, 0.2);
+        }
+        
+        .mnemonic-cell {
+            max-width: 200px;
+            word-break: break-word;
+            color: #f0883e;
+        }
+        
+        .address-cell {
+            font-family: monospace;
+            font-size: 11px;
+            color: #58a6ff;
+        }
+        
+        .balance-cell {
+            font-weight: bold;
+        }
+        
+        .balance-cell.positive {
+            color: #3fb950;
+        }
+        
+        .balance-cell.zero {
+            color: #8b949e;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .page-btn {
+            padding: 6px 12px;
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .page-btn:hover {
+            background-color: #30363d;
+        }
+        
+        .page-btn.active {
+            background-color: #1f6feb;
+            color: white;
+            border-color: #1f6feb;
+        }
+        
+        /* 发现余额 */
+        .found-balances {
+            background-color: #161b22;
+            border: 2px solid #f0883e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .found-balances h3 {
+            color: #f0883e;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .balance-item {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .balance-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .balance-header {
+            color: #3fb950;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .balance-amount {
+            font-size: 28px;
+            color: #3fb950;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        /* 通知弹窗 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #3fb950;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 400px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .button-group {
+                justify-content: center;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .patrol-controls {
+                flex-direction: column;
+            }
+            
+            .info-row {
+                flex-direction: column;
+            }
+            
+            .info-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .patrol-table td,
+            .patrol-table th {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🔍 助记词扫描器</h1>
+            <div class="version">v1.0</div>
+        </div>
+        
+        <!-- 警告横幅 -->
+        <div class="warning-banner">
+            ⚠️ 警告：本工具仅供教育用途！生成有效助记词概率极低（约5.4 duodecillion分之一）
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="button-group">
+                <button class="btn btn-start" onclick="startScanner()">
+                    <span>▶</span> 开始扫描
+                </button>
+                <button class="btn btn-pause" onclick="pauseScanner()">
+                    <span>⏸</span> 暂停
+                </button>
+                <button class="btn btn-test" onclick="testScanner()">
+                    <span>⚠</span> 测试
+                </button>
+                <button class="btn btn-stats" onclick="showStats()">
+                    <span>📊</span> 统计
+                </button>
+                <button class="btn btn-export" onclick="exportData()">
+                    <span>📋</span> 导出
+                </button>
+            </div>
+            
+            <div class="speed-control">
+                <label>扫描速度: <span class="speed-value" id="speedValue">10</span> 个/秒</label>
+                <input type="range" min="1" max="20" value="10" class="speed-slider" id="speedSlider" oninput="updateSpeed()">
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="stats-panel">
+            <h3>📈 统计信息</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statGenerated">0</div>
+                    <div class="stat-label">已生成</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statChecked">0</div>
+                    <div class="stat-label">已检查</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statWithBalance">0</div>
+                    <div class="stat-label">有余额</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statSuccessRate">0%</div>
+                    <div class="stat-label">成功率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotalBTC">0.00000000</div>
+                    <div class="stat-label">总BTC</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statAvgSpeed">0.0</div>
+                    <div class="stat-label">平均速度(个/秒)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 当前扫描 -->
+        <div class="current-scan">
+            <h3>🎯 当前扫描 <span id="currentScanNumber">#0</span></h3>
+            <div class="scan-info">
+                <div class="info-row">
+                    <div class="info-label">助记词:</div>
+                    <div class="info-value mnemonic-value" id="currentMnemonic">等待扫描...</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">地址:</div>
+                    <div class="info-value address-value" id="currentAddress">-</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">私钥:</div>
+                    <div class="info-value private-key-value" id="currentPrivateKey">-</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">余额:</div>
+                    <div class="info-value">
+                        <span class="balance-value zero-balance" id="currentBalance">0.00000000 BTC</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">时间:</div>
+                    <div class="info-value" id="currentTime">-</div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="copyCurrentMnemonic()">
+                        <span>📋</span> 复制助记词
+                    </button>
+                    <button class="action-btn" onclick="copyCurrentPrivateKey()">
+                        <span>🔑</span> 复制私钥
+                    </button>
+                    <button class="action-btn" onclick="viewCurrentAddress()">
+                        <span>🔍</span> 查看地址
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 巡查面板 -->
+        <div class="patrol-panel">
+            <h3>🔍 巡查面板</h3>
+            <div class="patrol-controls">
+                <input type="text" id="searchInput" placeholder="搜索助记词、地址或私钥...">
+                <select id="filterBalance">
+                    <option value="all">所有余额</option>
+                    <option value="positive">有余额</option>
+                    <option value="zero">零余额</option>
+                </select>
+                <select id="sortBy">
+                    <option value="time">按时间排序(最新)</option>
+                    <option value="balance">按余额排序</option>
+                    <option value="address">按地址排序</option>
+                </select>
+                <button onclick="searchData()">搜索</button>
+                <button onclick="clearSearch()">清除</button>
+                <button onclick="refreshPatrolView()">刷新</button>
+            </div>
+            
+            <div class="table-container">
+                <table class="patrol-table" id="patrolTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>助记词</th>
+                            <th>地址</th>
+                            <th style="width: 120px;">余额(BTC)</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patrolTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #8b949e;">
+                                暂无数据，点击"开始扫描"按钮开始
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="pagination">
+                <!-- 分页按钮将通过JavaScript生成 -->
+            </div>
+        </div>
+        
+        <!-- 发现余额 -->
+        <div class="found-balances">
+            <h3>💰 发现余额</h3>
+            <div id="foundBalancesList">
+                <div style="text-align: center; color: #8b949e; padding: 20px;">
+                    尚未发现任何余额
+                </div>
+            </div>
+        </div>
+        
+        <!-- 通知弹窗 -->
+        <div class="notification" id="notification">
+            <div class="notification-header">
+                <span>🎉</span> 发现余额！
+            </div>
+            <div id="notificationContent">
+                <!-- 通知内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="buidl.js"></script>
+    <script>
+        // 全局变量
+        let isScanning = false;
+        let scanCounter = 0;
+        let checkedCounter = 0;
+        let foundCounter = 0;
+        let totalBTC = 0;
+        let scanInterval;
+        let scanSpeed = 100; // 默认100ms一个（10个/秒）
+        
+        // 存储所有结果
+        let allResults = [];
+        let filteredResults = [];
+        let currentPage = 1;
+        const resultsPerPage = 20;
+        
+        // 当前扫描的数据
+        let currentData = null;
+        
+        // 性能跟踪
+        let scanStartTime = null;
+        let scanTimes = [];
+        
+        // 测试地址和助记词
+        const TEST_ADDRESS = "1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm";
+        const TEST_MNEMONIC = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        const TEST_PRIVATE_KEY = "L5EZftvrYaSudiozVRzTqLcHLNDoVn7H5HSfM9BAN6tMJX8oTWz6";
+        
+        // 更新速度显示
+        function updateSpeed() {
+            const slider = document.getElementById('speedSlider');
+            const speedValue = document.getElementById('speedValue');
+            const speed = parseInt(slider.value);
+            speedValue.textContent = speed;
+            scanSpeed = 1000 / speed; // 转换为毫秒
+            
+            if (isScanning) {
+                clearInterval(scanInterval);
+                scanInterval = setInterval(scanNext, scanSpeed);
+            }
+        }
+        
+        // 开始扫描
+        function startScanner() {
+            if (isScanning) return;
+            
+            isScanning = true;
+            scanStartTime = Date.now();
+            
+            // 更新按钮状态
+            document.querySelector('.btn-start').innerHTML = '<span>⏵</span> 扫描中...';
+            
+            // 立即扫描第一个
+            scanNext();
+            
+            // 设置定时器
+            scanInterval = setInterval(scanNext, scanSpeed);
+        }
+        
+        // 暂停扫描
+        function pauseScanner() {
+            if (!isScanning) return;
+            
+            isScanning = false;
+            clearInterval(scanInterval);
+            
+            // 更新按钮状态
+            document.querySelector('.btn-start').innerHTML = '<span>▶</span> 开始扫描';
+            
+            // 更新统计
+            updateStats();
+        }
+        
+        // 扫描下一个
+        async function scanNext() {
+            try {
+                // 记录开始时间
+                const scanStart = Date.now();
+                
+                // 生成助记词
+                const newmnemo = buidl.newMnemonic();
+                const words = newmnemo.words;
+                
+                // 转换为种子
+                const hdseed = buidl.mnemonic2SeedHex(words);
+                
+                // 派生地址
+                const addr = buidl.fromHDSeed(hdseed.seedHex, 0, 0, 0);
+                
+                // 更新计数器
+                scanCounter++;
+                document.getElementById('statGenerated').textContent = scanCounter;
+                document.getElementById('currentScanNumber').textContent = `#${scanCounter}`;
+                
+                // 检查余额
+                const balanceInfo = await checkBalance(addr.addr);
+                
+                // 更新检查计数器
+                checkedCounter++;
+                document.getElementById('statChecked').textContent = checkedCounter;
+                
+                // 记录扫描时间
+                const scanTime = Date.now() - scanStart;
+                scanTimes.push(scanTime);
+                
+                // 创建结果对象
+                const result = {
+                    id: scanCounter,
+                    words: words,
+                    address: addr.addr,
+                    privateKey: addr.pk,
+                    balance: balanceInfo.balance,
+                    received: balanceInfo.received,
+                    txCount: balanceInfo.txCount || 0,
+                    timestamp: new Date().toLocaleTimeString(),
+                    date: new Date().toISOString(),
+                    scanTime: scanTime
+                };
+                
+                // 保存当前数据
+                currentData = result;
+                
+                // 添加到所有结果
+                allResults.unshift(result);
+                
+                // 更新当前扫描显示
+                updateCurrentScan(result);
+                
+                // 如果有余额
+                if (balanceInfo.balance > 0) {
+                    foundCounter++;
+                    totalBTC += balanceInfo.balance / 100000000;
+                    document.getElementById('statWithBalance').textContent = foundCounter;
+                    document.getElementById('statTotalBTC').textContent = totalBTC.toFixed(8);
+                    
+                    // 显示通知
+                    showBalanceNotification(result);
+                    
+                    // 更新发现余额列表
+                    updateFoundBalances();
+                }
+                
+                // 更新巡查面板
+                if (document.querySelector('.patrol-panel').style.display !== 'none') {
+                    refreshPatrolView();
+                }
+                
+                // 更新统计
+                updateStats();
+                
+            } catch (error) {
+                console.error('扫描出错:', error);
+            }
+        }
+        
+        // 检查余额
+        async function checkBalance(address) {
+            try {
+                // 使用blockchain.info API
+                const url = `https://blockchain.info/balance?active=${address}`;
+                const response = await fetch(url, { timeout: 5000 });
+                const data = await response.json();
+                
+                return {
+                    balance: data[address]?.final_balance || 0,
+                    received: data[address]?.total_received || 0,
+                    txCount: data[address]?.n_tx || 0
+                };
+                
+            } catch (error) {
+                console.error('检查余额出错:', error);
+                return { balance: 0, received: 0, txCount: 0 };
+            }
+        }
+        
+        // 更新当前扫描显示
+        function updateCurrentScan(result) {
+            document.getElementById('currentMnemonic').textContent = result.words;
+            document.getElementById('currentAddress').textContent = result.address;
+            document.getElementById('currentPrivateKey').textContent = result.privateKey;
+            
+            const balanceInBTC = (result.balance / 100000000).toFixed(8);
+            const balanceElement = document.getElementById('currentBalance');
+            balanceElement.textContent = `${balanceInBTC} BTC`;
+            
+            if (result.balance > 0) {
+                balanceElement.className = 'balance-value';
+                balanceElement.style.color = '#3fb950';
+            } else {
+                balanceElement.className = 'balance-value zero-balance';
+                balanceElement.style.color = '#8b949e';
+            }
+            
+            document.getElementById('currentTime').textContent = result.timestamp;
+        }
+        
+        // 显示余额通知
+        function showBalanceNotification(result) {
+            const notification = document.getElementById('notification');
+            const content = document.getElementById('notificationContent');
+            
+            const balanceInBTC = (result.balance / 100000000).toFixed(8);
+            
+            content.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <strong>地址:</strong> ${result.address}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>助记词:</strong> ${result.words}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>私钥:</strong> ${result.privateKey}
+                </div>
+                <div style="font-size: 24px; font-weight: bold; color: #3fb950; text-align: center; margin: 15px 0;">
+                    ${balanceInBTC} BTC
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="copyToClipboard('${result.words}')" style="padding: 8px 16px; background: #21262d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        复制助记词
+                    </button>
+                    <button onclick="copyToClipboard('${result.privateKey}')" style="padding: 8px 16px; background: #21262d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        复制私钥
+                    </button>
+                </div>
+            `;
+            
+            notification.style.display = 'block';
+            
+            // 10秒后自动隐藏
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 10000);
+        }
+        
+        // 更新统计
+        function updateStats() {
+            // 成功率
+            const successRate = checkedCounter > 0 ? (foundCounter / checkedCounter * 100).toFixed(4) : 0;
+            document.getElementById('statSuccessRate').textContent = `${successRate}%`;
+            
+            // 平均速度
+            if (scanTimes.length > 0) {
+                const avgTime = scanTimes.reduce((a, b) => a + b, 0) / scanTimes.length;
+                const avgSpeed = (1000 / avgTime).toFixed(1);
+                document.getElementById('statAvgSpeed').textContent = avgSpeed;
+            }
+        }
+        
+        // 测试扫描
+        function testScanner() {
+            pauseScanner();
+            
+            // 创建测试结果
+            const testResult = {
+                id: ++scanCounter,
+                words: TEST_MNEMONIC,
+                address: TEST_ADDRESS,
+                privateKey: TEST_PRIVATE_KEY,
+                balance: 100000, // 0.001 BTC 用于测试
+                received: 100000,
+                txCount: 1,
+                timestamp: new Date().toLocaleTimeString(),
+                date: new Date().toISOString(),
+                scanTime: 100
+            };
+            
+            currentData = testResult;
+            allResults.unshift(testResult);
+            
+            // 更新显示
+            updateCurrentScan(testResult);
+            showBalanceNotification(testResult);
+            updateFoundBalances();
+            refreshPatrolView();
+            updateStats();
+            
+            alert('✅ 测试模式已激活\n\n已加载测试助记词和地址\n点击"开始扫描"继续正常扫描');
+        }
+        
+        // 显示统计
+        function showStats() {
+            alert(`📊 统计信息：
+            
+已生成助记词: ${scanCounter}
+已检查地址: ${checkedCounter}
+发现余额: ${foundCounter}
+成功率: ${checkedCounter > 0 ? (foundCounter / checkedCounter * 100).toFixed(6) : 0}%
+总BTC发现: ${totalBTC.toFixed(8)}
+平均扫描速度: ${scanTimes.length > 0 ? (1000 / (scanTimes.reduce((a, b) => a + b, 0) / scanTimes.length)).toFixed(1) : 0}个/秒
+扫描总时间: ${scanStartTime ? ((Date.now() - scanStartTime) / 1000).toFixed(1) : 0}秒`);
+        }
+        
+        // 导出数据
+        function exportData() {
+            if (allResults.length === 0) {
+                alert('暂无数据可导出');
+                return;
+            }
+            
+            const format = prompt('选择导出格式:\n1. JSON\n2. CSV\n3. TXT\n\n输入数字(1-3):', '1');
+            
+            let dataStr = '';
+            let filename = '';
+            
+            switch(format) {
+                case '1':
+                    dataStr = JSON.stringify(allResults, null, 2);
+                    filename = `mnemonic-scanner-${Date.now()}.json`;
+                    break;
+                case '2':
+                    // CSV格式
+                    const headers = ['ID', '助记词', '地址', '私钥', '余额(BTC)', '总接收(BTC)', '交易数', '时间'];
+                    const rows = allResults.map(r => [
+                        r.id,
+                        `"${r.words}"`,
+                        r.address,
+                        r.privateKey,
+                        (r.balance / 100000000).toFixed(8),
+                        (r.received / 100000000).toFixed(8),
+                        r.txCount,
+                        r.timestamp
+                    ]);
+                    dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
+                    filename = `mnemonic-scanner-${Date.now()}.csv`;
+                    break;
+                case '3':
+                    // TXT格式
+                    dataStr = allResults.map(r => 
+`扫描 #${r.id}
+时间: ${r.timestamp}
+助记词: ${r.words}
+地址: ${r.address}
+私钥: ${r.privateKey}
+余额: ${(r.balance / 100000000).toFixed(8)} BTC
+总接收: ${(r.received / 100000000).toFixed(8)} BTC
+交易数: ${r.txCount}
+----------------------------------------`
+                    ).join('\n\n');
+                    filename = `mnemonic-scanner-${Date.now()}.txt`;
+                    break;
+                default:
+                    alert('取消导出');
+                    return;
+            }
+            
+            // 创建下载链接
+            const blob = new Blob([dataStr], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ 数据已导出: ${filename}`);
+        }
+        
+        // 更新发现余额列表
+        function updateFoundBalances() {
+            const foundList = document.getElementById('foundBalancesList');
+            const foundItems = allResults.filter(r => r.balance > 0);
+            
+            if (foundItems.length === 0) {
+                foundList.innerHTML = '<div style="text-align: center; color: #8b949e; padding: 20px;">尚未发现任何余额</div>';
+                return;
+            }
+            
+            foundList.innerHTML = foundItems.slice(0, 5).map(result => `
+                <div class="balance-item">
+                    <div class="balance-header">
+                        <span>💰</span> 发现 #${result.id} - ${result.timestamp}
+                    </div>
+                    <div class="balance-amount">
+                        ${(result.balance / 100000000).toFixed(8)} BTC
+                    </div>
+                    <div style="margin-bottom: 10px; font-size: 12px; color: #8b949e;">
+                        <strong>地址:</strong> ${result.address}
+                    </div>
+                    <div style="margin-bottom: 10px; font-size: 12px; color: #f0883e;">
+                        <strong>助记词:</strong> ${result.words}
+                    </div>
+                    <div style="margin-bottom: 15px; font-size: 12px; color: #d2a8ff;">
+                        <strong>私钥:</strong> ${result.privateKey}
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="copyToClipboard('${result.words}')" style="padding: 6px 12px; background: #21262d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            复制助记词
+                        </button>
+                        <button onclick="copyToClipboard('${result.privateKey}')" style="padding: 6px 12px; background: #21262d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            复制私钥
+                        </button>
+                        <button onclick="viewAddress('${result.address}')" style="padding: 6px 12px; background: #1f6feb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            查看
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 巡查面板相关函数
+        function refreshPatrolView() {
+            filteredResults = [...allResults];
+            currentPage = 1;
+            updatePatrolTable();
+            updatePagination();
+        }
+        
+        function searchData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filter = document.getElementById('filterBalance').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            filteredResults = allResults.filter(result => {
+                // 搜索过滤
+                if (searchTerm && !(
+                    result.words.toLowerCase().includes(searchTerm) ||
+                    result.address.toLowerCase().includes(searchTerm) ||
+                    result.privateKey.toLowerCase().includes(searchTerm)
+                )) {
+                    return false;
+                }
+                
+                // 余额过滤
+                if (filter === 'positive' && result.balance <= 0) return false;
+                if (filter === 'zero' && result.balance > 0) return false;
+                
+                return true;
+            });
+            
+            // 排序
+            if (sortBy === 'balance') {
+                filteredResults.sort((a, b) => b.balance - a.balance);
+            } else if (sortBy === 'address') {
+                filteredResults.sort((a, b) => a.address.localeCompare(b.address));
+            } else {
+                filteredResults.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+            
+            currentPage = 1;
+            updatePatrolTable();
+            updatePagination();
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterBalance').value = 'all';
+            document.getElementById('sortBy').value = 'time';
+            refreshPatrolView();
+        }
+        
+        function updatePatrolTable() {
+            const tbody = document.getElementById('patrolTableBody');
+            
+            if (filteredResults.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #8b949e;">
+                            未找到匹配的结果
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = Math.min(startIndex + resultsPerPage, filteredResults.length);
+            const pageResults = filteredResults.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = pageResults.map(result => `
+                <tr class="${result.balance > 0 ? 'has-balance' : ''}">
+                    <td>${result.id}</td>
+                    <td class="mnemonic-cell" title="${result.words}">
+                        ${result.words.split(' ').slice(0, 3).join(' ')}...
+                    </td>
+                    <td class="address-cell" title="${result.address}">
+                        ${result.address.substring(0, 10)}...${result.address.substring(result.address.length - 6)}
+                    </td>
+                    <td class="balance-cell ${result.balance > 0 ? 'positive' : 'zero'}">
+                        ${(result.balance / 100000000).toFixed(8)}
+                    </td>
+                    <td>
+                        <button onclick="viewResult(${result.id})" style="padding: 4px 8px; background: #1f6feb; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                            查看
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = `
+                <button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    上一页
+                </button>
+            `;
+            
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            paginationHTML += `
+                <button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一页
+                </button>
+                <span style="margin-left: 15px; color: #8b949e; font-size: 13px;">
+                    第 ${currentPage} 页 / 共 ${totalPages} 页 (${filteredResults.length} 条结果)
+                </span>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+        
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                updatePatrolTable();
+                updatePagination();
+            }
+        }
+        
+        // 查看结果详情
+        function viewResult(id) {
+            const result = allResults.find(r => r.id === id);
+            if (result) {
+                currentData = result;
+                updateCurrentScan(result);
+                
+                // 滚动到当前扫描区域
+                document.querySelector('.current-scan').scrollIntoView({ behavior: 'smooth' });
+                
+                alert(`查看扫描 #${id}\n\n助记词: ${result.words}\n地址: ${result.address}\n私钥: ${result.privateKey}\n余额: ${(result.balance / 100000000).toFixed(8)} BTC`);
+            }
+        }
+        
+        // 复制功能
+        function copyCurrentMnemonic() {
+            if (currentData) {
+                copyToClipboard(currentData.words);
+            } else {
+                alert('当前没有扫描数据');
+            }
+        }
+        
+        function copyCurrentPrivateKey() {
+            if (currentData) {
+                copyToClipboard(currentData.privateKey);
+            } else {
+                alert('当前没有扫描数据');
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ 已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制');
+            });
+        }
+        
+        // 查看地址
+        function viewCurrentAddress() {
+            if (currentData) {
+                viewAddress(currentData.address);
+            } else {
+                alert('当前没有扫描数据');
+            }
+        }
+        
+        function viewAddress(address) {
+            window.open(`https://blockchain.info/address/${address}`, '_blank');
+        }
+        
+        // 初始化
+        window.onload = function() {
+            updateSpeed();
+        };
+    </script>
+</body>
+</html>
